@@ -1,0 +1,47 @@
+// This #include statement was automatically added by the Particle IDE.
+#include <MQTT.h>
+
+int led1 = D7;
+#define SensorINPUT  3
+unsigned char state = 0;
+
+// Create an MQTT client
+MQTT client("test.mosquitto.org", 1883, callback);
+
+// This is called when a message is received. Not using this feature in this project so it will be left empty
+void callback(char* topic, byte* payload, unsigned int length) {
+}
+
+void setup() {
+  pinMode(led1, OUTPUT);
+  pinMode(SensorINPUT, INPUT);
+  
+  //Trigger the blink function when the falling is detected,  FALLING is when the pin goes from high to low.
+  attachInterrupt(SensorINPUT, blink, FALLING);  
+  
+  client.connect("fishDev");    // Connect to the server and call myself "fishDev"
+}
+
+void loop() {
+    // When vibration is detected, will publish to pi and flash led
+    if (client.isConnected())   // Only try to send messages if we are connected
+    {
+      if (state != 0) {
+        client.publish("fishLog", " A fish is on the hook!!!");
+        state = 0;
+        digitalWrite(led1, HIGH);   
+        delay(500);
+        client.loop();
+      }
+      else
+      {
+        digitalWrite(led1, LOW);
+        client.loop();
+      }
+    }
+}
+    
+//Interrupts function 
+void blink() {
+    state++;
+}
